@@ -183,7 +183,7 @@ $route作为vue实例的一个响应式属性
 
 route相当于当前正在跳转的路由对象。。可以从里面获取name,path,params,query等。。
 
-![img](https://img-blog.csdn.net/20180806212532808?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdndW95dTE5OTY=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70)
+![img](../img/vueadmin_vue_1.png)
 
 | 声明式                    | 编程式             |
 | ------------------------- | ------------------ |
@@ -199,7 +199,7 @@ route相当于当前正在跳转的路由对象。。可以从里面获取name,p
 
 - 提交登录表单完成登录
 
-![image](D:\Typora\file\image\image.png)
+![image](../img/vueadmin_vue_2.png)
 
 > mock.js给假数据
 
@@ -475,7 +475,7 @@ export default request
 
 而我们采用这个布局：
 
-![image (1)](D:\Typora\file\image\image (1).png)
+![](../img/vueadmin_vue_3.png)
 
 一般来说Header和Aside都是不会变化的，只有Main部分会跟着链接变化而变化，所以我们可以提炼公共部分出来，放在Home.vue中，然后Main部分放在Index.vue中
 

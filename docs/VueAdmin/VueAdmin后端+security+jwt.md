@@ -85,7 +85,7 @@ public class GlobalExceptionHandler {
 
 ## 整合Spring Security
 
-![image3](D:\Typora\file\image\image3.png)
+![image3](../img/vueadmin_back_1.png)
 
 流程说明：
 
@@ -238,7 +238,7 @@ public Result captcha() throws IOException {
 
 ### 身份认证
 
-![认证](D:\Typora\file\image\认证.jpg)
+![认证](../img/vueadmin_back_2.jpg)
 
 > 封装权限
 

@@ -27,7 +27,7 @@ JAVA_HOME=D:\developer\env\Java\jdk1.8.0_91Copy to clipboardErrorCopied
 - 解压安装包，直接运行`bin`目录下的`startup.cmd`；
 - 运行成功后，访问`http://localhost:8848/nacos`可以查看Nacos的主页，默认账号密码都是nacos。
 
-![img](http://www.macrozheng.com/images/spingcloud_nacos_01.png)
+![img](../img/spingcloud_nacos_01.png)
 
 ## 创建应用注册到Nacos
 
@@ -88,7 +88,7 @@ management:
 
 **运行两个nacos-user-service和一个nacos-ribbon-service，在Nacos页面上可以看到如下信息：**
 
-![img](http://www.macrozheng.com/images/spingcloud_nacos_02.png)
+![img](../img/spingcloud_nacos_02.png)
 
 ## 负载均衡功能
 
@@ -244,7 +244,7 @@ config:
 
 - 填写配置示意图：
 
-![img](http://www.macrozheng.com/images/spingcloud_nacos_03.png)
+![img](../img/spingcloud_nacos_03.png)
 
 - 启动nacos-config-client，调用接口查看配置信息：http://localhost:9101/configInfo
 

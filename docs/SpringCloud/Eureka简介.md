@@ -6,15 +6,15 @@
 
 - 创建一个eureka-server模块，并使用Spring Initializer初始化一个SpringBoot项目
 
-![img](http://www.macrozheng.com/images/springcloud_eureka_01.png)
+![img](../img/springcloud_eureka_01.png)
 
 - 填写应用信息
 
-![img](http://www.macrozheng.com/images/springcloud_eureka_02.png)
+![img](../img/springcloud_eureka_02.png)
 
 - 选择你需要的SpringCloud组件进行创建
 
-![img](http://www.macrozheng.com/images/springcloud_eureka_03.png)
+![img](../img/springcloud_eureka_03.png)
 
 - 创建完成后会发现pom.xml文件中已经有了eureka-server的依赖
 
@@ -109,11 +109,11 @@ eureka:
 
 - 运行eureka-client
 
-![img](http://www.macrozheng.com/images/springcloud_eureka_07.png)
+![img](../img/springcloud_eureka_07.png)
 
 - 查看注册中心http://localhost:8001/发现Eureka客户端已经成功注册
 
-![img](http://www.macrozheng.com/images/springcloud_eureka_08.png)
+![img](../img/springcloud_eureka_08.png)
 
 提示：可以通过配置info来展示服务的信息，点击上面url会跳转到info
 
@@ -176,15 +176,15 @@ eureka:
 
 > 从原启动配置中复制一个出来
 
-![img](http://www.macrozheng.com/images/springcloud_eureka_09.png)
+![img](../img/springcloud_eureka_09.png)
 
 > 配置启动的配置文件
 
-![img](http://www.macrozheng.com/images/springcloud_eureka_10.png)
+![img](../img/springcloud_eureka_10.png)
 
 - 启动两个eureka-server，访问其中一个注册中心http://replica1:8002/发现另一个已经成为其备份
 
-![img](http://www.macrozheng.com/images/springcloud_eureka_11.png)
+![img](../img/springcloud_eureka_11.png)
 
 - 修改Eureka-client，让其连接到集群
 
@@ -206,7 +206,7 @@ eureka:
 
 > 以该配置文件启动后访问任意一个注册中心节点都可以看到eureka-client
 
-![img](http://www.macrozheng.com/images/springcloud_eureka_12.png)
+![img](../img/springcloud_eureka_12.png)
 
 注意：在配置集群的时候，register-with-eureka: true，fetch-registry: true为false不影响，因为本身是server所以为false依然可以互相注册为集群，消费者可以值注册一个，当注册的eureka挂了，会自动使用集群中的另一个
 
@@ -268,7 +268,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
 ### 运行eureka-security-server，访问http://localhost:8004发现需要登录认证
 
-![img](http://www.macrozheng.com/images/springcloud_eureka_13.png)
+![img](../img/springcloud_eureka_13.png)
 
 ### eureka-client注册到有登录认证的注册中心
 
@@ -296,7 +296,7 @@ eureka:
 
 - 以application-security.yml配置运行eureka-client，可以在注册中心界面看到eureka-client已经成功注册
 
-![img](http://www.macrozheng.com/images/springcloud_eureka_14.png)
+![img](../img/springcloud_eureka_14.png)
 
 ## Eureka的常用配置
 

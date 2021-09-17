@@ -95,13 +95,13 @@ Hibernate: create table t_book (id integer not null auto_increment, author varch
 
 > 新增(POST)
 
-![image-20210620145310373](C:\Users\sky\AppData\Roaming\Typora\typora-user-images\image-20210620145310373.png)
+![](../img/jpa1.png)
 
 > 查询(GET请求)
 
 http://127.0.0.1:8080/books
 
-![image-20210620145642136](C:\Users\sky\AppData\Roaming\Typora\typora-user-images\image-20210620145642136.png)
+![](../img/jpa2.png)
 
 若要查询具体在后面加id
 
@@ -121,7 +121,7 @@ http://127.0.0.1:8080/books?page=1&size=3&sort=id,desc
 
 http://127.0.0.1:8080/books/2
 
-![image-20210620152759387](C:\Users\sky\AppData\Roaming\Typora\typora-user-images\image-20210620152759387.png)
+![](../img/jpa3.png)
 
 > 删除(DELETE请求)
 
@@ -157,7 +157,7 @@ path 将所有请求路径中的books都修改为rest，collectionResourceRel �
 
 默认路径就是http://127.0.0.1:8080/rest/search/findByNameEquals?name=红楼梦
 
-![image-20210620155646729](C:\Users\sky\AppData\Roaming\Typora\typora-user-images\image-20210620155646729.png)
+![](../img/jpa4.png)
 
 @RestResource(path = "name" ,rel = "name")，path是最后访问路径的name，rel是返回json的key可以作为提示。
 

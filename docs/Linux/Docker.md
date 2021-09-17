@@ -114,7 +114,7 @@ docker attach 容器id	直接进入容器启动命令的终端
 
 docker cp 容器id:容器内路径 目的主机路径
 
-![img](https://gimg2.baidu.com/image_search/src=http%3A%2F%2F5b0988e595225.cdn.sohucs.com%2Fimages%2F20190925%2Fcc896018961147da9e1fb4cd4f49e429.jpeg&refer=http%3A%2F%2F5b0988e595225.cdn.sohucs.com&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=jpeg?sec=1630831245&t=a54f12d57208cee89a999e7259dd4acb)
+![img](../img/docker1.jpg)
 
 ## 容器数据卷
 
@@ -198,9 +198,10 @@ dockerfifile是用来构建Docker镜像的构建文件，是由一系列命令�
 
 > DockerFile命令
 
+博客：
 https://blog.csdn.net/y472360651/article/details/81289141?ops_request_misc=%257B%2522request%255Fid%2522%253A%2522162824109916780271543525%2522%252C%2522scm%2522%253A%252220140713.130102334..%2522%257D&request_id=162824109916780271543525&biz_id=0&utm_medium=distribute.pc_search_result.none-task-blog-2~all~sobaiduend~default-2-81289141.pc_search_result_control_group&utm_term=dockerfile%E5%91%BD%E4%BB%A4&spm=1018.2226.3001.4187
 
-![img](https://gimg2.baidu.com/image_search/src=http%3A%2F%2Fimg2020.cnblogs.com%2Fblog%2F821814%2F202101%2F821814-20210109102912082-1978951306.png&refer=http%3A%2F%2Fimg2020.cnblogs.com&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=jpeg?sec=1630833615&t=37b16dc8c047c685b5f85a7b04be6376)
+![img](../img/docker2.jpg)
 
 
 
@@ -308,7 +309,7 @@ docker exec -it tomcat-net-01 ping 192.168.0.3/容器名
 
 ### 网络互通
 
-![image-20210807214108302](C:\Users\sky\AppData\Roaming\Typora\typora-user-images\image-20210807214108302.png)
+![](../img/docker3.png)
 
 docker0和自定义网络肯定不通，我们使用自定义网络的好处就是网络隔离：不打通网卡之间连接，通过容器连接网卡
 
@@ -434,7 +435,7 @@ https://docs.docker.com/samples/wordpress/
 
 ## Docker Swarm
 
-![Swarm mode cluster](https://docs.docker.com/engine/swarm/images/swarm-diagram.png)
+![](../img/docker4.png)
 
 1、初始化swarm节点为manager
 
@@ -458,7 +459,7 @@ Raft协议： 保证大多数节点存活才可以用。 只要>1 ，集群至�
 
 ### service
 
-![image-20210828144755616](D:\WebStorm_project\my-docs\docs\img\image-20210828144755616.jpg)
+![](../img/docker5.jpg)
 
 弹性、扩缩容！集群！
 
