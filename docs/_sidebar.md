@@ -11,7 +11,10 @@
 - **Web**
   - [Vue](Web/Vue.md)
   - [前端基础](Web/前端基础.md)
+  - [JavaScript](Web/JavaScript.md)
+  - [ES6语法](Web/ES6语法.md)
 - **VueAdmin**
   - [VueAdmin前端笔记](VueAdmin/Vueadmin开发记录.md)
   - [VueAdmin后端笔记](VueAdmin/VueAdmin后端+security+jwt.md)
 - **电子书笔记**
+  - [凤凰架构](Books/凤凰架构.md)
