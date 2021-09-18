@@ -34,7 +34,7 @@
     console.log(foo[0], bar[0]); // => 9, 9
     ```
 
-**[⬆ 返回目录](#table-of-contents)**
+
 
 <a name="references"></a>
 ## 引用
@@ -83,7 +83,7 @@
     console.log(b); // ReferenceError
     ```
 
-**[⬆ 返回目录](#table-of-contents)**
+
 
 <a name="objects"></a>
 ## 对象
@@ -229,7 +229,7 @@
     };
     ```
 
-**[⬆ 返回目录](#table-of-contents)**
+
 
 <a name="arrays"></a>
 ## 数组
@@ -280,7 +280,7 @@
     const nodes = Array.from(foo);
     ```
 
-**[⬆ 返回目录](#table-of-contents)**
+
 
 <a name="destructuring"></a>
 ## 解构
@@ -347,7 +347,7 @@
     ```
 
 
-**[⬆ 返回目录](#table-of-contents)**
+
 
 <a name="strings"></a>
 ## Strings
@@ -403,7 +403,7 @@
     }
     ```
 
-**[⬆ 返回目录](#table-of-contents)**
+
 
 <a name="functions"></a>
 ## 函数
@@ -528,7 +528,7 @@
   ```
 
 
-**[⬆ 返回目录](#table-of-contents)**
+
 
 <a name="arrow-functions"></a>
 ## 箭头函数
@@ -569,7 +569,7 @@
     }, 0);
     ```
 
-**[⬆ 返回目录](#table-of-contents)**
+
 
 <a name="constructors"></a>
 ## 构造器
@@ -681,7 +681,7 @@
     }
     ```
 
-**[⬆ 返回目录](#table-of-contents)**
+
 
 <a name="modules"></a>
 ## 模块
@@ -731,7 +731,7 @@
     export default es6;
     ```
 
-**[⬆ 返回目录](#table-of-contents)**
+
 
 <a name="iterators-and-generators"></a>
 ## Iterators and Generators
@@ -765,7 +765,7 @@
 
   > 为什么？因为它们现在还没法很好地编译到 ES5。 (译者注：目前(2016/03) Chrome 和 Node.js 的稳定版本都已支持 generators)
 
-**[⬆ 返回目录](#table-of-contents)**
+
 
 <a name="properties"></a>
 ## 属性
@@ -800,7 +800,7 @@
     const isJedi = getProp('jedi');
     ```
 
-**[⬆ 返回目录](#table-of-contents)**
+
 
 <a name="variables"></a>
 ## 变量
@@ -909,7 +909,7 @@
     }
     ```
 
-**[⬆ 返回目录](#table-of-contents)**
+
 
 <a name="hoisting"></a>
 ## Hoisting
@@ -1003,7 +1003,7 @@
 
   - 想了解更多信息，参考 [Ben Cherry](http://www.adequatelygood.com/) 的 [JavaScript Scoping & Hoisting](http://www.adequatelygood.com/2010/2/JavaScript-Scoping-and-Hoisting)。
 
-**[⬆ 返回目录](#table-of-contents)**
+
 
 <a name="comparison-operators--equality"></a>
 ## 比较运算符和等号
@@ -1051,7 +1051,7 @@
 
   - [15.4](#15.4) <a name='15.4'></a> 想了解更多信息，参考 Angus Croll 的 [Truth Equality and JavaScript](http://javascriptweblog.wordpress.com/2011/02/07/truth-equality-and-javascript/#more-2108)。
 
-**[⬆ 返回目录](#table-of-contents)**
+
 
 <a name="blocks"></a>
 ## 代码块
@@ -1102,7 +1102,7 @@
     ```
 
 
-**[⬆ 返回目录](#table-of-contents)**
+
 
 <a name="comments"></a>
 ## 注释
@@ -1193,7 +1193,7 @@
     }
     ```
 
-**[⬆ 返回目录](#table-of-contents)**
+
 
 <a name="whitespace"></a>
 ## 空白
@@ -1378,7 +1378,7 @@
     ```
 
 
-**[⬆ 返回目录](#table-of-contents)**
+
 
 <a name="commas"></a>
 ## 逗号
@@ -1460,7 +1460,7 @@
     ];
     ```
 
-**[⬆ 返回目录](#table-of-contents)**
+
 
 <a name="semicolons"></a>
 ## 分号
@@ -1489,7 +1489,7 @@
 
     [Read more](http://stackoverflow.com/a/7365214/1712802).
 
-**[⬆ 返回目录](#table-of-contents)**
+
 
 <a name="type-casting--coercion"></a>
 ## 类型转换
@@ -1565,7 +1565,7 @@
     const hasAge = !!age;
     ```
 
-**[⬆ 返回目录](#table-of-contents)**
+
 
 <a name="naming-conventions"></a>
 ## 命名规则
@@ -1701,7 +1701,7 @@
     ```
 
 
-**[⬆ 返回目录](#table-of-contents)**
+
 
 <a name="accessors"></a>
 ## 存取器
@@ -1756,7 +1756,7 @@
     }
     ```
 
-**[⬆ 返回目录](#table-of-contents)**
+
 
 <a name="events"></a>
 ## 事件
@@ -1787,7 +1787,7 @@
     });
     ```
 
-  **[⬆ 返回目录](#table-of-contents)**
+  
 
 
 ## jQuery
@@ -1849,14 +1849,14 @@
     $sidebar.find('ul').hide();
     ```
 
-**[⬆ 返回目录](#table-of-contents)**
+
 
 <a name="ecmascript-5-compatibility"></a>
 ## ECMAScript 5 兼容性
 
   - [26.1](#26.1) <a name='26.1'></a> 参考 [Kangax](https://twitter.com/kangax/) 的 ES5 [兼容性](http://kangax.github.com/es5-compat-table/)。
 
-**[⬆ 返回目录](#table-of-contents)**
+
 
 <a name="ecmascript-6-styles"></a>
 ## ECMAScript 6 规范
@@ -1877,7 +1877,7 @@
 1. [迭代器和生成器](#iterators-and-generators)
 1. [模块](#modules)
 
-**[⬆ 返回目录](#table-of-contents)**
+
 
 <a name="testing"></a>
 ## 测试
@@ -1890,7 +1890,7 @@
     }
     ```
 
-**[⬆ 返回目录](#table-of-contents)**
+
 
 <a name="performance"></a>
 ## 性能
@@ -1905,7 +1905,7 @@
   - [Are Javascript functions like `map()`, `reduce()`, and `filter()` optimized for traversing arrays?](https://www.quora.com/JavaScript-programming-language-Are-Javascript-functions-like-map-reduce-and-filter-already-optimized-for-traversing-array/answer/Quildreen-Motta)
   - 等等...
 
-**[⬆ 返回目录](#table-of-contents)**
+
 
 <a name="resources"></a>
 ## 相关资源（英文）
@@ -1986,7 +1986,7 @@
   - [JavaScript Jabber](http://devchat.tv/js-jabber/)
 
 
-**[⬆ 返回目录](#table-of-contents)**
+
 
 <a name="in-the-wild"></a>
 

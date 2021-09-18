@@ -33,7 +33,7 @@
     console.log(foo[0], bar[0]); // => 9, 9
     ```
 
-**[⬆ 回到顶部](#table-of-contents)**
+
 
 ## <a name="objects">对象</a>
 
@@ -82,7 +82,7 @@
     };
     ```
 
-**[⬆ 回到顶部](#table-of-contents)**
+
 
 ## <a name="arrays">数组</a>
 
@@ -134,7 +134,7 @@
     }
     ```
 
-**[⬆ 回到顶部](#table-of-contents)**
+
 
 
 ## <a name="strings">字符串</a>
@@ -219,7 +219,7 @@
     }
     ```
 
-**[⬆ 回到顶部](#table-of-contents)**
+
 
 
 ## <a name="functions">函数</a>
@@ -277,7 +277,7 @@
     }
     ```
 
-**[⬆ 回到顶部](#table-of-contents)**
+
 
 
 
@@ -313,7 +313,7 @@
     var isJedi = getProp('jedi');
     ```
 
-**[⬆ 回到顶部](#table-of-contents)**
+
 
 
 ## <a name="variables">变量</a>
@@ -435,7 +435,7 @@
     }
     ```
 
-**[⬆ 回到顶部](#table-of-contents)**
+
 
 
 ## <a name="hoisting">提升</a>
@@ -518,8 +518,6 @@
 
   - 了解更多信息在 [JavaScript Scoping & Hoisting](http://www.adequatelygood.com/2010/2/JavaScript-Scoping-and-Hoisting) by [Ben Cherry](http://www.adequatelygood.com/).
 
-**[⬆ 回到顶部](#table-of-contents)**
-
 
 
 ## <a name="comparison-operators--equality">比较运算符 & 等号</a>
@@ -567,7 +565,7 @@
 
   - 了解更多信息在 [Truth Equality and JavaScript](http://javascriptweblog.wordpress.com/2011/02/07/truth-equality-and-javascript/#more-2108) by Angus Croll.
 
-**[⬆ 回到顶部](#table-of-contents)**
+
 
 
 ## <a name="blocks">块</a>
@@ -618,7 +616,7 @@
     ```
 
 
-**[⬆ 回到顶部](#table-of-contents)**
+
 
 
 ## <a name="comments">注释</a>
@@ -711,7 +709,7 @@
     }
     ```
 
-**[⬆ 回到顶部](#table-of-contents)**
+
 
 
 ## <a name="whitespace">空白</a>
@@ -896,7 +894,7 @@
     ```
 
 
-**[⬆ 回到顶部](#table-of-contents)**
+
 
 ## <a name="commas">逗号</a>
 
@@ -962,7 +960,7 @@
     ];
     ```
 
-**[⬆ 回到顶部](#table-of-contents)**
+
 
 
 ## <a name="semicolons">分号</a>
@@ -991,7 +989,7 @@
 
     [了解更多](http://stackoverflow.com/a/7365214/1712802).
 
-**[⬆ 回到顶部](#table-of-contents)**
+
 
 
 ## <a name="type-casting--coercion">类型转换</a>
@@ -1074,7 +1072,7 @@
     var hasAge = !!age;
     ```
 
-**[⬆ 回到顶部](#table-of-contents)**
+
 
 
 ## <a name="naming-conventions">命名规则</a>
@@ -1213,7 +1211,7 @@
     var CheckBox = require('./CheckBox');
     ```
 
-**[⬆ 回到顶部](#table-of-contents)**
+
 
 
 ## <a name="accessors">存取器</a>
@@ -1267,7 +1265,7 @@
     };
     ```
 
-**[⬆ 回到顶部](#table-of-contents)**
+
 
 
 ## <a name="constructors">构造函数</a>
@@ -1352,7 +1350,7 @@
     };
     ```
 
-**[⬆ 回到顶部](#table-of-contents)**
+
 
 
 ## <a name="events">事件</a>
@@ -1383,7 +1381,7 @@
     });
     ```
 
-  **[⬆ 回到顶部](#table-of-contents)**
+  
 
 
 ## <a name="modules">模块</a>
@@ -1414,7 +1412,7 @@
     }(this);
     ```
 
-**[⬆ 回到顶部](#table-of-contents)**
+
 
 
 ## <a name="jquery">jQuery</a>
@@ -1476,14 +1474,14 @@
     $sidebar.find('ul').hide();
     ```
 
-**[⬆ 回到顶部](#table-of-contents)**
+
 
 
 ## <a name="ecmascript-5-compatibility">ECMAScript 5 兼容性</a>
 
   - 参考 [Kangax](https://twitter.com/kangax/) 的 ES5 [兼容表](http://kangax.github.com/es5-compat-table/).
 
-**[⬆ 回到顶部](#table-of-contents)**
+
 
 
 ## <a name="testing">测试</a>
@@ -1496,7 +1494,7 @@
     }
     ```
 
-**[⬆ 回到顶部](#table-of-contents)**
+
 
 
 ## <a name="performance">性能</a>
@@ -1510,7 +1508,7 @@
   - [Long String Concatenation](http://jsperf.com/ya-string-concat)
   - Loading...
 
-**[⬆ 回到顶部](#table-of-contents)**
+
 
 
 ## <a name="resources">资源</a>
@@ -1585,7 +1583,7 @@
 
   - [JavaScript Jabber](http://devchat.tv/js-jabber/)
 
-**[⬆ 回到顶部](#table-of-contents)**
+
 
 ## 作者
 
