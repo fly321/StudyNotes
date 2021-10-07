@@ -1,9 +1,12 @@
 - **Java**
   - [若依](Java/ruoyi.md)
+  - [DDD](Java/DDD%20的分层模式和设计原则.md)
+  - [数据结构](Java/数据结构.md)
 - **Linux**
   - [Docker](Linux/Docker.md)
 - **SpringBoot**
   - [SpringBoot_JPA](SpringBoot/SpringBoot_JPA实现Rest.md)
+  - [SpringBoot_@Inject](SpringBoot/annotation之@Autowired、@Inject、@Resource三者区别.md)
 - **SpringCloud**
   - [Eureka](SpringCloud/Eureka简介.md)
   - [Nacos](SpringCloud/Nacos.md)
