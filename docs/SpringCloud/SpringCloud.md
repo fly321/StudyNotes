@@ -285,11 +285,11 @@ Hystrix将调用服务的线程与服务访问的线程隔离开，相当一次�
 
 Hystrix，将使用独立的线程池对应每一个服务提供者。于是某个服务提供者的高延迟和饱和资源受限只会发生在该服务提供者的线程池中。
 
-<img src="../img/cloud_1.jpg" style="zoom:60%;" />
+![](../img/cloud_1.jpg)
 
 2、信号量
 
-<img src="../img/cloud_2.jpg" style="zoom:50%;" />
+![](../img/cloud_2.jpg)
 
 #### @HystrixCommand详解
 
@@ -514,7 +514,7 @@ public class RateLimitController {
 - 由于Sentinel采用的懒加载规则，需要我们先访问下接口，Sentinel控制台中才会有对应服务信息，我们先访问下该接口：http://localhost:8401/rateLimit/byResource
 - 在Sentinel控制台配置流控规则，根据@SentinelResource注解的value值：
 
-<img src="../img/cloud_3.png" style="zoom:75%;" />
+![](../img/cloud_3.png)
 
 - 资源名：唯一名称，默认请求路径
   针对来源：Sentinel可以针对调用者进行限流，填写微服务名，指定对哪个微服务进行限流 ，默认default(不区分来源，全部限制)
@@ -538,7 +538,7 @@ public class RateLimitController {
 
 - 在Sentinel控制台配置流控规则，使用访问的URL：
 
-<img src="../img/cloud_4.png" style="zoom:75%;" />
+![](../img/cloud_4.png)
 
 - 多次访问该接口，会返回默认的限流处理结果：http://localhost:8401/rateLimit/byUrl
 
@@ -646,7 +646,7 @@ feign:
 
 **原理示意图**
 
-<img src="../img/cloud_5.png" style="zoom:80%;" />
+![](../img/cloud_5.png)
 
 - 首先我们直接在配置中心创建规则，配置中心将规则推送到客户端；
 - Sentinel控制台也从配置中心去获取配置信息。
@@ -680,7 +680,7 @@ spring:
 
 - 在Nacos中添加配置：
 
-<img src="../img/cloud_6.png" style="zoom:60%;" />
+![](../img/cloud_6.png)
 
 - 添加配置信息如下：
 
@@ -709,11 +709,11 @@ spring:
 
 - 发现Sentinel控制台已经有了如下限流规则：
 
-<img src="../img/cloud_7.png" style="zoom:60%;" />
+![](../img/cloud_7.png)
 
 - 快速访问测试接口，可以发现返回了限流处理信息;
 
-## Gateway
+## Spring Cloud Gateway
 
 那得看你的函数是用什么修饰的了,java.util.function.Predicate中的Predicate接口它定义的方法的格式是使用的default或static修饰的，具体的你可以去那个类中查看Java源代码对函数式接口的定义方式,http://www.matools.com/api/java8
 
@@ -772,4 +772,75 @@ spring:
         - Retry
 ```
 
-​	
+## Spring Cloud Config
+
+### 1、配置客户端
+
+```yaml
+spring:
+  application:
+    name: config-client
+  cloud:
+    config:
+      label: master
+      discovery:
+        enabled: true
+        service-id: config-server
+      enabled: true
+      fail-fast: true
+      profile: dev
+    consul:
+      host: localhost
+      port: 8500
+      discovery:
+        ip-address: ${HOST_ADDRESS:localhost}
+        port: ${SERVER_PORT:${server.port}}
+        instance-id: config-client-${server.port}
+        service-name: config-client
+```
+
+### 2、配置仓库
+
+> 由于Spring Cloud Config 需要一个存储配置信息的Git仓库，这里我们先在Git仓库中添加好配置文件再演示其功能，Git仓库地址为：https://gitee.com/w-kyrie/Config-Repo.git。
+
+**获取配置文件信息的访问格式：**
+
+- /{application}/{profile}[/{label}]
+- /{application}-{profile}.yml
+- /{label}/{application}-{profile}.yml
+- /{application}-{profile}.properties
+- /{label}/{application}-{profile}.properties
+
+**占位符相关解释**
+
+- application：代表应用名称，默认为配置文件中的spring.application.name，如果配置了spring.cloud.config.name，则为该名称；
+- label：代表分支名称，对应配置文件中的spring.cloud.config.label；
+- profile：代表环境名称，对应配置文件中的spring.cloud.config.profile。
+
+### 3、配置服务端
+
+```yaml
+spring:
+  application:
+    name: config-server
+  cloud:
+    consul:
+      host: localhost
+      port: 8500
+      discovery:
+        ip-address: localhost
+        port: ${server.port}
+        instance-id: config-server-${server.port}
+        service-name: config-server
+server:
+  port: 8888
+---
+spring:
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://gitee.com/w-kyrie/Config-Repo.git
+          searchPaths: ${APP_LOCATE:dev}
+```
+
