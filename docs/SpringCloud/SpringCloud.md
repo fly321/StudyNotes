@@ -844,3 +844,231 @@ spring:
           searchPaths: ${APP_LOCATE:dev}
 ```
 
+## Spring Cloud Stream
+
+spring Cloud Stream是一个用来为微服务应用构建消息驱动能力的框架。它可以基于Spring Boot来创建独立的、可用于生产的Spring应用程序。它通过使用Spring Integration来连接消息代理中间件以实现消息事件驱动的微服务应用。Spring Cloud Stream为一些供应商的消息中间件产品提供了个性化的自动化配置实现，并且引入了发布-订阅、消费组以及消息分区这三个核心概念。简单的说，Spring Cloud Stream本质上就是整合了Spring Boot和Spring Integration，实现了一套轻量级的消息驱动的微服务框架。通过使用Spring Cloud Stream，可以有效地简化开发人员对消息中间件的使用复杂度，让系统开发人员可以有更多的精力关注于核心业务逻辑的处理。由于Spring Cloud Stream基于Spring Boot实现，所以它秉承了Spring Boot的优点，实现了自动化配置的功能帮忙我们可以快速的上手使用，但是目前为止Spring Cloud Stream只支持下面两个著名的消息中间件的自动化配置：
+
+- `RabbitMQ`
+- `Kafka`
+
+快速入门：https://blog.didispace.com/spring-cloud-starter-dalston-7-1/
+
+中文指导手册：https://m.wang1314.com/doc/webapp/topic/20971999.html
+
+### 概述
+
+对于每一个Spring Cloud Stream的应用程序来说，它不需要知晓消息中间件的通信细节，它只需要知道`Binder`对应用程序提供的概念去实现即可，而这个概念就是在快速入门中我们提到的消息通道：`Channel`。如下图案例，在应用程序和Binder之间定义了两条输入通道和三条输出通道来传递消息，而绑定器则是作为这些通道和消息中间件之间的桥梁进行通信。
+
+![](../img/cloud_stream_04.png)
+
+#### 绑定器
+
+`Binder`绑定器是Spring Cloud Stream中一个非常重要的概念。通过定义绑定器作为中间层，完美地实现了应用程序与消息中间件细节之间的隔离。通过向应用程序暴露统一的`Channel`通道，使得应用程序不需要再考虑各种不同的消息中间件实现。当我们需要升级消息中间件，或是更换其他消息中间件产品时，我们要做的就是更换它们对应的`Binder`绑定器而不需要修改任何Spring Boot的应用逻辑。
+
+便于我们更换消息队列，只需要修改binder即可，无需更改应用程序的代码
+
+#### 发布-订阅模式
+
+在Spring Cloud Stream中的消息通信方式遵循了发布-订阅模式，当一条消息被投递到消息中间件之后，它会通过共享的`Topic`主题进行广播，消息消费者在订阅的主题中收到它并触发自身的业务逻辑处理。
+
+RabbitMQ常用的交换器类型有：
+
+- fanout：类似于广播
+- direct：根据键值路由消息
+- topic：direct的升级版，添加模糊查询
+- headers：类似于http的headers
+
+使用：https://blog.csdn.net/pan_junbiao/article/details/112838589
+
+#### 消费组
+
+虽然Spring Cloud Stream通过发布-订阅模式将消息生产者与消费者做了很好的解耦，基于相同主题的消费者可以轻松的进行扩展，但是这些扩展都是针对不同的应用实例而言的，在现实的微服务架构中，我们每一个微服务应用为了实现高可用和负载均衡，实际上都会部署多个实例。
+
+如果在同一个主题上的应用需要启动多个实例的时候，我们可以通过`spring.cloud.stream.bindings.input.group`属性为应用指定一个组名，这样这个应用的多个实例在接收到消息的时候，只会有一个成员真正的收到消息并进行处理。如下图所示，我们为Service-A和Service-B分别启动了两个实例，并且根据服务名进行了分组，这样当消息进入主题之后，Group-A和Group-B都会收到消息的副本，但是在两个组中都只会有一个实例对其进行消费。
+
+![](../img/cloud_stream_05.png)
+
+- **（生产者把消息发布到交换器上，消息从交换器到达特定的队列需要进行绑定，消息最终到达队列并被消费者接收。）**
+
+默认情况下，当我们没有为应用指定消费组的时候，Spring Cloud Stream会为其分配一个独立的匿名消费组。所以，每一个实例都在一个独立的消费组中。简单来说，消费组就是为了解决负载均衡
+
+#### 消息分区
+
+通过引入消费组的概念，我们已经能够在多实例的情况下，保障每个消息只被组内一个实例进行消费。通过上面对消费组参数设置后的实验，我们可以观察到，消费组并无法控制消息具体被哪个实例消费。对于一些特定的场景，为了控制一些特定的消息只能被指定的实例消费。
+
+分区概念的引入就是为了解决这样的问题：当生产者将消息数据发送给多个消费者实例时，保证拥有共同特征的消息数据始终是由同一个消费者实例接收和处理。
+
+### 设计思想
+
+#### 1、标准MQ
+
+生产者/消费组靠消息（Message）媒介传递信息内容
+
+消息必须走特点的通道（MessageChannel）
+
+消息通道里的消息如何被消费呢，谁负责收法处理(消息通道MessageChannel的子接口SubscribeChannel，由MessageHandler消息处理器所订阅)
+
+![](../img/cloud_stream_01.png)
+
+#### 2、stream中的消息通信方式遵循了发布-订阅模式
+
+Topic主题进行广播
+
+1. 在rabbitmq就是exchange
+2. 在kafka中就是Topic
+
+#### 3、springcloud stream标准流程套路
+
+![](../img/cloud_stream_02.png)
+
+1. Binder：很方便的连接中间件，屏蔽差异
+
+2. channel：通道，是队列Queue的一种抽象，在消息通通讯系统中就是实现存储和转发的媒介，通过Channel对队列进行配置
+
+3. Source和Sink：简单的可理解为参照对象是Springcloud stream自身，从stream发布消息就是输出，接收消息就是输入
+
+#### 4、编码APi和常用注解
+
+![](../img/cloud_stream_03.png)
+
+### 常用配置
+
+例：rabbitmq的配置
+
+```yaml
+#springboot包含了对RabbitMQ的自动化配置等内容
+spring
+  rabbitmq:
+    host: local.rabbitmq.com
+    port: 5672
+    username: username
+    password: password
+```
+
+给消费者设置消费组和主题
+
+1. 设置消费组： `spring.cloud.stream.bindings.<通道名>.group=<消费组名>`
+2. 设置主题： `spring.cloud.stream.bindings.<通道名>.destination=<主题名>`
+
+给生产者指定通道的主题：`spring.cloud.stream.bindings.<通道名>.destination=<主题名>`
+
+消费者开启分区，指定实例数量与实例索引
+
+1. 开启消费分区： `spring.cloud.stream.bindings.<通道名>.consumer.partitioned=true`
+2. 消费实例数量： `spring.cloud.stream.instanceCount=1` (具体指定)
+3. 实例索引： `spring.cloud.stream.instanceIndex=1` #设置当前实例的索引值
+
+生产者指定分区键
+
+1. 分区键： `spring.cloud.stream.bindings.<通道名>.producer.partitionKeyExpress=<分区键>`
+2. 分区数量： `spring.cloud.stream.bindings.<通道名>.producer.partitionCount=<分区数量>`
+
+一般最简单的应用只要配置spring.cloud.stream.bindings.开头的项即可
+
+### 消息组
+
+> 使用消费组实现消息消费的负载均衡
+
+通常在生产环境，我们的每个服务都不会以单节点的方式运行在生产环境，当同一个服务启动多个实例的时候，这些实例都会绑定到同一个消息通道的目标主题（Topic）上。
+
+默认情况下，当生产者发出一条消息到绑定通道上，这条消息会产生多个副本被每个消费者实例接收和处理，但是有些业务场景之下，我们希望生产者产生的消息只被其中一个实例消费，这个时候我们需要为这些消费者设置消费组来实现这样的功能，实现的方式非常简单，我们只需要在服务消费者端设置`spring.cloud.stream.bindings.input.group`属性即可，比如我们可以这样实现：
+
+- 先创建一个消费者应用`SinkReceiver`，实现了`greetings`主题上的输入通道绑定，它的实现如下：
+
+```java
+@EnableBinding(ExampleBinder.class)
+public class ExampleReceiver {
+
+    private static Logger logger = LoggerFactory.getLogger(ExampleReceiver.class);
+
+    @StreamListener(ExampleBinder.NAME)
+    public void receive(String payload) {
+        logger.info("Received: " + payload);
+    }
+
+}
+```
+
+- 为了将`SinkReceiver`的输入通道目标设置为`greetings`主题，以及将该服务的实例设置为同一个消费组，做如下设置：
+
+```properties
+spring.cloud.stream.bindings.input.group=Service-A
+#spring.cloud.stream.bindings.通道名.destination=exchange名
+spring.cloud.stream.bindings.input.destination=greetings
+```
+
+- 完成了消息消费者之后，我们再来实现一个消息生产者应用`SinkSender`，具体如下：
+
+```java
+//@EnableBinding(TestTopic.class)放到application启动类中
+@Slf4j
+@RestController
+public class TestController {
+
+    @Autowired
+    private TestTopic testTopic;
+
+    @GetMapping("/sendMessage")
+    public String messageWithMQ(@RequestParam String message) {
+        testTopic.output().send(MessageBuilder.withPayload(message).build());
+        return "ok";
+    }
+
+}
+public interface TestTopic {
+
+    String OUTPUT = "example-topic";
+
+    @Output(OUTPUT)
+    MessageChannel output();
+
+}
+```
+
+- 为消息生产者`SinkSender`做一些设置，让它的输出通道绑定目标也指向`greetings`主题，具体如下：
+
+```properties
+spring.cloud.stream.bindings.example-topic.destination=greetings
+```
+
+到这里，对于消费分组的示例就已经完成了。分别运行上面实现的生产者与消费者，其中消费者我们启动多个实例。通过控制台，我们可以发现每个生产者发出的消息，会被启动的消费者**以轮询的方式**进行接收和输出。
+
+### 消息分区
+
+> 对于一些特殊场景，除了要保证单一实例消费之外，还希望那些具备相同特征的消息都能够被同一个实例进行消费。这时候我们就需要对消息进行分区处理。
+
+在Spring Cloud Stream中实现消息分区非常简单，我们可以根据消费组示例做一些配置修改就能实现，具体如下：
+
+- 在消费者应用`SinkReceiver`中，我们对配置文件做一些修改，具体如下：
+
+```properties
+spring.cloud.stream.bindings.example-topic.group=Service-A
+spring.cloud.stream.bindings.example-topic.destination=greetings
+
+spring.cloud.stream.bindings.example-topic.consumer.partitioned=true
+spring.cloud.stream.instanceCount=2
+spring.cloud.stream.instanceIndex=1
+```
+
+从上面的配置中，我们可以看到增加了这三个参数：
+
+1. `spring.cloud.stream.bindings.input.consumer.partitioned`：通过该参数开启消费者分区功能；
+2. `spring.cloud.stream.instanceCount`：该参数指定了当前消费者的总实例数量；
+3. `spring.cloud.stream.instanceIndex`：该参数设置当前实例的索引号，从0开始，最大值为`instanceCount`参数 - 1。我们试验的时候需要启动多个实例，可以通过运行参数来为不同实例设置不同的索引值。
+
+在生产者应用`SinkSender`中，我们对配置文件也做一些修改，具体如下
+
+```properties
+spring.cloud.stream.bindings.output.producer.partitionKeyExpression=payload
+spring.cloud.stream.bindings.output.producer.partitionCount=2
+```
+
+从上面的配置中，我们可以看到增加了这两个参数：
+
+1. `spring.cloud.stream.bindings.output.producer.partitionKeyExpression`：通过该参数指定了分区键的表达式规则，我们可以根据实际的输出消息规则来配置SpEL来生成合适的分区键；
+2. `spring.cloud.stream.bindings.output.producer.partitionCount`：该参数指定了消息分区的数量。
+
+**注：**根据payload的规则指定一个实例发送消息，后续的消息都是发送给该消费实例。
+
+**问题：**设置了0的消费实例导致一直无法获得消息。因为只设置了instanceIndex=0，但选择的是instanceIndex=1实例，所以一直给1发送消息，而1并没有设置导致消息被无效消费。
+
