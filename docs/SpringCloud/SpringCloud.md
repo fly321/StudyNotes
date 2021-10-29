@@ -1072,3 +1072,998 @@ spring.cloud.stream.bindings.output.producer.partitionCount=2
 
 **问题：**设置了0的消费实例导致一直无法获得消息。因为只设置了instanceIndex=0，但选择的是instanceIndex=1实例，所以一直给1发送消息，而1并没有设置导致消息被无效消费。
 
+### Kafka
+
+> Kafka是一种消息队列，主要用来处理大量数据状态下的消息队列，一般用来做日志的处理。既然是消息队列，那么`Kafka`也就拥有消息队列的相应的特性了
+
+**解耦合**
+
+- 耦合的状态表示当你实现某个功能的时候，是直接接入当前接口，而利用消息队列，可以将相应的消息发送到消息队列，这样的话，如果接口出了问题，将不会影响到当前的功能。
+
+**异步处理**
+
+- 异步处理替代了之前的同步处理，异步处理不需要让流程走完就返回结果，可以将消息发送到消息队列中，然后返回结果，剩下让其他业务处理接口从消息队列中拉取消费处理即可。
+
+**流量削峰**
+
+- 高流量的时候，使用消息队列作为中间件可以将流量的高峰保存在消息队列中，从而防止了系统的高请求，减轻服务器的请求处理压力。
+
+## Spring Cloud Bus
+
+> Spring Cloud Bus 使用轻量级的消息代理来连接微服务架构中的各个服务，可以将其用于广播状态更改（例如配置中心配置更改）或其他管理指令，本文将对其用法进行详细介绍。
+
+### Spring Cloud Bus 简介
+
+我们通常会使用消息代理来构建一个主题，然后把微服务架构中的所有服务都连接到这个主题上去，当我们向该主题发送消息时，所有订阅该主题的服务都会收到消息并进行消费。使用 Spring Cloud Bus 可以方便地构建起这套机制，所以 Spring Cloud Bus 又被称为消息总线。Spring Cloud Bus 配合 Spring Cloud Config 使用可以实现配置的动态刷新。目前 Spring Cloud Bus 支持两种消息代理：RabbitMQ 和 Kafka，下面以 RabbitMQ 为例来演示下使用Spring Cloud Bus 动态刷新配置的功能。
+
+### 动态刷新配置
+
+> 使用 Spring Cloud Bus 动态刷新配置需要配合 Spring Cloud Config 一起使用，我们使用[上一节](https://mp.weixin.qq.com/s/xVsKrGeRInn3fwNWrDF-CQ)中的config-server、config-client模块来演示下该功能。
+
+#### 给config-server添加消息总线支持
+
+- 在pom.xml中添加相关依赖：
+
+```xml
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-bus-amqp</artifactId>
+</dependency>
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-actuator</artifactId>
+</dependency>
+```
+
+- 添加配置文件application-amqp.yml，主要是添加了RabbitMQ的配置及暴露了刷新配置的Actuator端点
+
+```yaml
+server:
+  port: 8904
+spring:
+  application:
+    name: config-server
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://gitee.com/macrozheng/springcloud-config.git
+          username: macro
+          password: 123456
+          clone-on-start: true # 开启启动时直接从git获取配置
+  rabbitmq: #rabbitmq相关配置
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8001/eureka/
+management:
+  endpoints: #暴露bus刷新配置的端点
+    web:
+      exposure:
+        include: 'bus-refresh'
+```
+
+### 给config-client添加消息总线支持
+
+- 在pom.xml中添加相关依赖：
+
+```xml
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-bus-amqp</artifactId>
+</dependency>
+```
+
+- 添加配置文件bootstrap-amqp1.yml及bootstrap-amqp2.yml用于启动两个不同的config-client，两个配置文件只有端口号不同；
+
+```yaml
+server:
+  port: 9004
+spring:
+  application:
+    name: config-client
+  cloud:
+    config:
+      profile: dev #启用环境名称
+      label: dev #分支名称
+      name: config #配置文件名称
+      discovery:
+        enabled: true
+        service-id: config-server
+  rabbitmq: #rabbitmq相关配置
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8001/eureka/
+management:
+  endpoints:
+    web:
+      exposure:
+        include: 'refresh'
+```
+
+### 动态刷新配置演示
+
+- 我们先启动相关服务，启动eureka-server，以application-amqp.yml为配置启动config-server，以bootstrap-amqp1.yml为配置启动config-client，以bootstrap-amqp2.yml为配置再启动一个config-client，启动后注册中心显示如下：
+
+![](../img/springcloud_config_08.png)
+
+- 启动所有服务后，我们登录RabbitMQ的控制台可以发现Spring Cloud Bus 创建了一个叫springCloudBus的交换机及三个以 springCloudBus.anonymous开头的队列：
+
+![](../img/springcloud_config_10.png)
+
+![](../img/springcloud_config_11.png)
+
+- 我们先修改Git仓库中dev分支下的config-dev.yml配置文件：
+
+```yaml
+# 修改前信息
+config:
+  info: "config info for dev(dev)"
+# 修改后信息
+config:
+  info: "update config info for dev(dev)"  
+```
+
+- 调用注册中心的接口刷新所有配置：http://localhost:8904/actuator/bus-refresh
+
+![](../img/springcloud_config_09.png)
+
+- 刷新后再分别调用http://localhost:9004/configInfo 和 http://localhost:9005/configInfo 获取配置信息，发现都已经刷新了；
+
+```
+update config info for dev(dev)
+```
+
+- 如果只需要刷新指定实例的配置可以使用以下格式进行刷新：http://localhost:8904/actuator/bus-refresh/{destination} ，我们这里以刷新运行在9004端口上的config-client为例http://localhost:8904/actuator/bus-refresh/config-client:9004。
+
+### 配合WebHooks使用
+
+WebHooks相当于是一个钩子函数，我们可以配置当向Git仓库push代码时触发这个钩子函数，这里以Gitee为例来介绍下其使用方式，这里当我们向配置仓库push代码时就会自动刷新服务配置了。
+
+![](../img/springcloud_config_12.png)
+
+## Spring Cloud Security
+
+> Spring Cloud Security 为构建安全的SpringBoot应用提供了一系列解决方案，结合Oauth2可以实现单点登录、令牌中继、令牌交换等功能，本文将对其结合Oauth2入门使用进行详细介绍。
+
+### OAuth2 简介
+
+OAuth 2.0是用于授权的行业标准协议。OAuth 2.0为简化客户端开发提供了特定的授权流，包括Web应用、桌面应用、移动端应用等。
+
+### OAuth2 相关名词解释
+
+Resource owner（资源拥有者）：拥有该资源的最终用户，他有访问资源的账号密码；
+Resource server（资源服务器）：拥有受保护资源的服务器，如果请求包含正确的访问令牌，可以访问资源；
+Client（客户端）：访问资源的客户端，会使用访问令牌去获取资源服务器的资源，可以是浏览器、移动设备或者服务器；
+Authorization server（认证服务器）：用于认证用户的服务器，如果客户端认证通过，发放访问资源服务器的令牌。
+
+### 四种授权模式
+
+Authorization Code（授权码模式）：正宗的OAuth2的授权模式，客户端先将用户导向认证服务器，登录后获取授权码，然后进行授权，最后根据授权码获取访问令牌；
+Implicit（简化模式）：和授权码模式相比，取消了获取授权码的过程，直接获取访问令牌；
+Resource Owner Password Credentials（密码模式）：客户端直接向用户获取用户名和密码，之后向认证服务器获取访问令牌；
+Client Credentials（客户端模式）：客户端直接通过客户端认证（比如client_id和client_secret）从认证服务器获取访问令牌。
+
+### 授权码模式
+
+![](../img/spingcloud_security_01.png)
+
+- (A)客户端将用户导向认证服务器；
+- (B)用户在认证服务器进行登录并授权；
+- (C)认证服务器返回授权码给客户端；
+- (D)客户端通过授权码和跳转地址向认证服务器获取访问令牌；
+- (E)认证服务器发放访问令牌（有需要带上刷新令牌）。
+
+### 密码模式
+
+![](../img/spingcloud_security_02.png)
+
+- (A)客户端从用户获取用户名和密码；
+- (B)客户端通过用户的用户名和密码访问认证服务器；
+- (C)认证服务器返回访问令牌（有需要带上刷新令牌）。
+
+在实现的时候，资源服务器和授权服务器一般写在一起
+
+### Oauth2的实现
+
+#### 1、添加认证服务器（授权服务器）
+
+使用@EnableAuthorizationServer注解，继承`AuthorizationServerConfigurerAdapter`类
+
+```java
+@Configuration
+@EnableAuthorizationServer
+public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdapter {
+}
+```
+
+根据需求实现对应的配置：
+
+```java
+public class AuthorizationServerConfigurerAdapter implements AuthorizationServerConfigurer {
+    public AuthorizationServerConfigurerAdapter() {
+    }
+
+    public void configure(AuthorizationServerSecurityConfigurer security) throws Exception {
+    }
+
+    public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
+    }
+
+    public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
+    }
+}
+```
+
+**1、ClientDetailsServiceConfigurer**
+
+主要是注入ClientDetailsService实例对象（唯一配置注入）。其它地方可以通过ClientDetailsServiceConfigurer调用开发配置的ClientDetailsService。系统提供的二个ClientDetailsService实现类：JdbcClientDetailsService、InMemoryClientDetailsService。
+
+```java
+   /**
+	 *
+	 * 配置从哪里获取ClientDetails信息。
+	 * 在client_credentials授权方式下，只要这个ClientDetails信息。
+	 * @param clientsDetails
+	 * @throws Exception
+	 */
+	@Override
+	public void configure(ClientDetailsServiceConfigurer clientsDetails) throws Exception {
+		//认证信息从数据库获取
+		clientsDetails.withClientDetails(clientDetailsService);
+		// 测试用，将客户端信息存储在内存中
+		clientsDetails.inMemory()
+				.withClient("client")   // client_id
+				.secret("secret")       // client_secret
+				.authorizedGrantTypes("authorization_code")     // 该client允许的授权类型
+				.scopes("app")     // 允许的授权范围
+				.autoApprove(true); //登录后绕过批准询问(/oauth/confirm_access)
+			
+	}
+```
+
+**2、AuthorizationServerEndpointsConfigurer端点配置**
+
+AuthorizationServerEndpointsConfigurer其实是一个装载类，装载Endpoints所有相关的类配置（AuthorizationServer、TokenServices、TokenStore、ClientDetailsService、UserDetailsService）。
+
+```java
+    /**
+	 * 注入相关配置：
+	 * 1. 密码模式下配置认证管理器 AuthenticationManager
+	 * 2. 设置 AccessToken的存储介质tokenStore， 默认使用内存当做存储介质。
+      * 3. userDetailsService注入
+	 */
+	@Override
+	public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
+ 
+		TokenEnhancerChain tokenEnhancerChain = new TokenEnhancerChain();
+		endpoints
+				.authenticationManager(authenticationManager)
+				//末确认点.userDetailsService(userDetailsService) //MUST：密码模式下需设置一个AuthenticationManager对象,获取 UserDetails信息
+				.tokenStore(tokenStore)//token的保存方式
+				.tokenEnhancer(tokenEnhancerChain);//token里加点信息
+}
+```
+
+**3、AuthorizationServerSecurityConfigurer端点安全配置**
+
+AuthorizationServerSecurityConfigurer继承SecurityConfigurerAdapter.也就是一个 Spring Security安全配置提供给AuthorizationServer去配置AuthorizationServer的端点（/oauth/****）的安全访问规则、过滤器Filter。
+
+类继承关系：
+
+![](../img/oauth_1.png)
+
+可配置属性项：
+
+![](../img/oauth_2.png)
+
+1. ClientDetail加密方式
+2. allowFormAuthenticationForClients 允许表单认证。针对/oauth/token端点。
+3. 添加开发配置tokenEndpointAuthenticationFilters
+4. tokenKeyAccess、checkTokenAccess访问权限。
+
+```java
+/**
+	 *  配置：安全检查流程,用来配置令牌端点（Token Endpoint）的安全与权限访问
+	 *  默认过滤器：BasicAuthenticationFilter
+	 *  1、oauth_client_details表中clientSecret字段加密【ClientDetails属性secret】
+	 *  2、CheckEndpoint类的接口 oauth/check_token 无需经过过滤器过滤，默认值：denyAll()
+	 * 对以下的几个端点进行权限配置：
+	 * /oauth/authorize：授权端点
+	 * /oauth/token：令牌端点
+	 * /oauth/confirm_access：用户确认授权提交端点
+	 * /oauth/error：授权服务错误信息端点
+	 * /oauth/check_token：用于资源服务访问的令牌解析端点
+	 * /oauth/token_key：提供公有密匙的端点，如果使用JWT令牌的话
+	 **/
+	@Override
+	public void configure(AuthorizationServerSecurityConfigurer security) throws Exception {
+		security.allowFormAuthenticationForClients()//允许客户表单认证
+				.passwordEncoder(new BCryptPasswordEncoder())//设置oauth_client_details中的密码编码器
+				.tokenKeyAccess("permitAll()")
+				.checkTokenAccess("isAuthenticated()")
+				.passwordEncoder(oauthClientPasswordEncoder);
+	}
+```
+
+#### 2、添加资源服务器配置，使用@EnableResourceServer注解开启
+
+```java
+/**
+ * 资源服务器配置
+ * Created by macro on 2019/9/30.
+ */
+@Configuration
+@EnableResourceServer
+public class ResourceServerConfig extends ResourceServerConfigurerAdapter {
+
+    @Override
+    public void configure(HttpSecurity http) throws Exception {
+        http.authorizeRequests()
+                .anyRequest()
+                .authenticated()
+                .and()
+                .requestMatchers()
+                .antMatchers("/user/**");//配置需要保护的资源路径
+    }
+}
+```
+
+WebSecurityConfigurerAdapter是默认情况下Spring security的http配置；ResourceServerConfigurerAdapter是默认情况下spring security oauth 的http配置。
+
+优先级高于ResourceServerConfigurer，用于保护oauth相关的endpoints，同时主要作用于用户的登录（form login，Basic auth）
+
+#### 3、添加SpringSecurity配置，允许认证相关路径的访问及表单登录
+
+```java
+/**
+ * Created by macro on 2019/9/30.
+ */
+@RestController
+@RequestMapping("/user")
+public class UserController {
+    @GetMapping("/getCurrentUser")
+    public Object getCurrentUser(Authentication authentication) {
+        return authentication.getPrincipal();
+    }
+}
+```
+
+##  Oauth2结合JWT使用
+
+> Spring Cloud Security 为构建安全的SpringBoot应用提供了一系列解决方案，结合Oauth2还可以实现更多功能，比如使用JWT令牌存储信息，刷新令牌功能，本文将对其结合JWT使用进行详细介绍。
+
+Spring Cloud Security中有两种存储令牌的方式可用于解决该问题，一种是使用Redis来存储，另一种是使用JWT来存储。
+
+### 1、使用Redis存储令牌
+
+- 在pom.xml中添加Redis相关依赖：
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-redis</artifactId>
+</dependency>
+```
+
+- 在application.yml中添加redis相关配置：
+
+```yaml
+spring:
+  redis: #redis相关配置
+    password: 123456 #有密码时设置
+```
+
+- 添加在Redis中存储令牌的配置：
+
+```java
+/**
+ * 使用redis存储token的配置
+ * Created by macro on 2019/10/8.
+ */
+@Configuration
+public class RedisTokenStoreConfig {
+
+    @Autowired
+    private RedisConnectionFactory redisConnectionFactory;
+
+    @Bean
+    public TokenStore redisTokenStore (){
+        return new RedisTokenStore(redisConnectionFactory);
+    }
+}
+```
+
+- 在认证服务器配置中指定令牌的存储策略为Redis：
+
+```java
+@Configuration
+@EnableAuthorizationServer
+public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdapter {
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    @Qualifier("redisTokenStore")
+    private TokenStore tokenStore;
+
+    @Override
+    public void configure(AuthorizationServerEndpointsConfigurer endpoints) {
+        endpoints.authenticationManager(authenticationManager)
+                .userDetailsService(userService)
+                .tokenStore(tokenStore);//配置令牌存储策略
+    }
+
+    //省略代码...
+}
+```
+
+### **2、使用JWT存储令牌**
+
+可以在该网站上获得解析结果：https://jwt.io/
+
+- 添加使用JWT存储令牌的配置：
+
+```java
+/**
+ * 使用Jwt存储token的配置
+ * Created by macro on 2019/10/8.
+ */
+@Configuration
+public class JwtTokenStoreConfig {
+
+    @Bean
+    public TokenStore jwtTokenStore() {
+        return new JwtTokenStore(jwtAccessTokenConverter());
+    }
+
+    @Bean
+    public JwtAccessTokenConverter jwtAccessTokenConverter() {
+        JwtAccessTokenConverter accessTokenConverter = new JwtAccessTokenConverter();
+        accessTokenConverter.setSigningKey("test_key");//配置JWT使用的秘钥
+        return accessTokenConverter;
+    }
+}
+```
+
+- 在认证服务器配置中指定令牌的存储策略为JWT：
+
+```java
+	@Autowired
+    @Qualifier("jwtTokenStore")
+    private TokenStore tokenStore;
+
+	@Override
+    public void configure(AuthorizationServerEndpointsConfigurer endpoints) {
+        endpoints.authenticationManager(authenticationManager)
+                .userDetailsService(userService)
+                .tokenStore(tokenStore) //配置令牌存储策略
+                .accessTokenConverter(jwtAccessTokenConverter);
+    }
+```
+
+### 扩展JWT中存储的内容
+
+> 有时候我们需要扩展JWT中存储的内容，这里我们在JWT中扩展一个key为`enhance`，value为`enhance info`的数据。
+
+- 继承TokenEnhancer实现一个JWT内容增强器：
+
+```java
+/**
+ * Jwt内容增强器
+ * Created by macro on 2019/10/8.
+ */
+public class JwtTokenEnhancer implements TokenEnhancer {
+    @Override
+    public OAuth2AccessToken enhance(OAuth2AccessToken accessToken, OAuth2Authentication authentication) {
+        Map<String, Object> info = new HashMap<>();
+        info.put("enhance", "enhance info");
+        ((DefaultOAuth2AccessToken) accessToken).setAdditionalInformation(info);
+        return accessToken;
+    }
+}
+```
+
+- 创建一个JwtTokenEnhancer实例：
+
+```java
+/**
+ * 使用Jwt存储token的配置
+ * Created by macro on 2019/10/8.
+ */
+@Configuration
+public class JwtTokenStoreConfig {
+
+    //省略代码...
+
+    @Bean
+    public JwtTokenEnhancer jwtTokenEnhancer() {
+        return new JwtTokenEnhancer();
+    }
+}
+```
+
+- 在认证服务器配置中配置JWT的内容增强器：
+
+```java
+/**
+ * 认证服务器配置
+ * Created by macro on 2019/9/30.
+ */
+@Configuration
+@EnableAuthorizationServer
+public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdapter {
+	//省略代码...
+    @Override
+    public void configure(AuthorizationServerEndpointsConfigurer endpoints) {
+        TokenEnhancerChain enhancerChain = new TokenEnhancerChain();
+        
+        List<TokenEnhancer> delegates = new ArrayList<>();
+        delegates.add(jwtTokenEnhancer); //配置JWT的内容增强器
+        delegates.add(jwtAccessTokenConverter);
+        
+        enhancerChain.setTokenEnhancers(delegates);
+        endpoints.authenticationManager(authenticationManager)
+                .userDetailsService(userService)
+                .tokenStore(tokenStore) //配置令牌存储策略
+                .accessTokenConverter(jwtAccessTokenConverter)
+                .tokenEnhancer(enhancerChain);
+    }
+
+    //省略代码...
+}
+```
+
+### Java中解析JWT中的内容
+
+> 如果我们需要获取JWT中的信息，可以使用一个叫jjwt的工具包。
+
+- 在pom.xml中添加相关依赖：
+
+```xml
+<dependency>
+    <groupId>io.jsonwebtoken</groupId>
+    <artifactId>jjwt</artifactId>
+    <version>0.9.0</version>
+</dependency>
+```
+
+- 修改UserController类，使用jjwt工具类来解析Authorization头中存储的JWT内容。
+
+```java
+/**
+ * Created by macro on 2019/9/30.
+ */
+@RestController
+@RequestMapping("/user")
+public class UserController {
+    @GetMapping("/getCurrentUser")
+    public Object getCurrentUser(Authentication authentication, HttpServletRequest request) {
+        String header = request.getHeader("Authorization");
+        String token = StrUtil.subAfter(header, "bearer ", false);
+        return Jwts.parser()
+                .setSigningKey("test_key".getBytes(StandardCharsets.UTF_8))
+                .parseClaimsJws(token)
+                .getBody();
+    }
+
+}
+```
+
+- 将令牌放入`Authorization`头中，访问地址
+
+## Oauth2实现单点登录
+
+> 单点登录（Single Sign On）指的是当有多个系统需要登录时，用户只需登录一个系统，就可以访问其他需要登录的系统而无需登录。
+
+spring security配置
+
+- security.oauth2.client.access-token-uri
+  指定获取access token的URI.
+
+- security.oauth2.client.user-authorization-uri
+  用户跳转去获取access token的URI.
+
+https://www.cnblogs.com/austinspark-jessylu/p/8065248.html
+
+### 创建oauth2-client模块
+
+- 在pom.xml中添加相关依赖：
+
+```xml
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-oauth2</artifactId>
+</dependency>
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-security</artifactId>
+</dependency>
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-web</artifactId>
+</dependency>
+<dependency>
+    <groupId>io.jsonwebtoken</groupId>
+    <artifactId>jjwt</artifactId>
+    <version>0.9.0</version>
+</dependency>
+```
+
+- 在application.yml中进行配置：
+
+```yaml
+server:
+  port: 9501
+  servlet:
+    session:
+      cookie:
+        name: OAUTH2-CLIENT-SESSIONID #防止Cookie冲突，冲突会导致登录验证不通过
+oauth2-server-url: http://localhost:9401
+spring:
+  application:
+    name: oauth2-client
+security:
+  oauth2: #与oauth2-server对应的配置
+    client:
+      client-id: admin
+      client-secret: admin123456
+      user-authorization-uri: ${oauth2-server-url}/oauth/authorize
+      access-token-uri: ${oauth2-server-url}/oauth/token
+    resource:
+      jwt:
+        key-uri: ${oauth2-server-url}/oauth/token_key
+```
+
+- 在启动类上添加@EnableOAuth2Sso注解来启用单点登录功能：
+
+```java
+@EnableOAuth2Sso
+@SpringBootApplication
+public class Oauth2ClientApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(Oauth2ClientApplication.class, args);
+    }
+
+}
+```
+
+- 添加接口用于获取当前登录用户信息：
+
+```java
+/**
+ * Created by macro on 2019/9/30.
+ */
+@RestController
+@RequestMapping("/user")
+public class UserController {
+
+    @GetMapping("/getCurrentUser")
+    public Object getCurrentUser(Authentication authentication) {
+        return authentication;
+    }
+
+}
+```
+
+### 修改认证服务器配置
+
+修改oauth2-jwt-server模块中的AuthorizationServerConfig类，将绑定的跳转路径为http://localhost:9501/login，并添加获取秘钥时的身份认证。
+
+需要跳过授权操作进行自动授权可以添加`autoApprove(true)`配置
+
+```java
+/**
+ * 认证服务器配置
+ * Created by macro on 2019/9/30.
+ */
+@Configuration
+@EnableAuthorizationServer
+public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdapter {
+    //以上省略一堆代码...
+    @Override
+    public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
+        clients.inMemory()
+                .withClient("admin")
+                .secret(passwordEncoder.encode("admin123456"))
+                .accessTokenValiditySeconds(3600)
+                .refreshTokenValiditySeconds(864000)
+//                .redirectUris("http://www.baidu.com")
+                .redirectUris("http://localhost:9501/login") //单点登录时配置
+            	.autoApprove(true) //自动授权配置
+                .scopes("all")
+                .authorizedGrantTypes("authorization_code","password","refresh_token");
+    }
+
+    @Override
+    public void configure(AuthorizationServerSecurityConfigurer security) {
+        security.tokenKeyAccess("isAuthenticated()"); // 获取密钥需要身份认证，使用单点登录时必须配置
+    }
+}
+```
+
+### oauth2-client添加权限校验
+
+- 添加配置开启基于方法的权限校验：（@EnableGlobalMethodSecurity(prePostEnabled = true)）
+
+```java
+/**
+ * 在接口上配置权限时使用
+ * Created by macro on 2019/10/11.
+ */
+@Configuration
+@EnableGlobalMethodSecurity(prePostEnabled = true)
+@Order(101)
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
+}
+```
+
+- 在UserController中添加需要admin权限的接口：
+
+```java
+/**
+ * Created by macro on 2019/9/30.
+ */
+@RestController
+@RequestMapping("/user")
+public class UserController {
+
+    @PreAuthorize("hasAuthority('admin')")
+    @GetMapping("/auth/admin")
+    public Object adminAuth() {
+        return "Has admin auth!";
+    }
+
+}
+```
+
+- 访问需要admin权限的接口：http://localhost:9501/user/auth/admin
+
+SecurityUser（UserDetails的实现类）中覆写了*getAuthorities()* 方法
+
+当我们的前端提交用户名和密码进行登录时，会调用UserDetailsServiceImpl中我们覆写的
+loadUserByUsername() 方法，创建SecurityUser对象并将根据用户名查询到的权限值列表赋值到SecurityUser对象的permissionValueList成员变量中，最后返回SecurityUser对象。
+
+![](../img/oauth_3.png)
+
+这样 spring调用 getAuthorities() 就能够我们登录时得到权限列表值。 最终回到@PreAuthorize(“hasAuthority(‘xxx’)”)注解，该注解就可以根据’xxx’是否存在于getAuthorities() 来判断该登录用户是否具有访问注解修饰的方法的权限。
+
+## Spring Cloud Sleuth
+
+随着我们的系统越来越庞大，各个服务间的调用关系也变得越来越复杂。当客户端发起一个请求时，这个请求经过多个服务后，最终返回了结果，经过的每一个服务都有可能发生延迟或错误，从而导致请求失败。这时候我们就需要请求链路跟踪工具来帮助我们，理清请求调用的服务链路，解决问题。
+
+### 基础概念
+
+- Span。基本工作单位，一次链路调用（可以是发起RPC和写DB等操作，没有特定的限制）创建一个Span，通过一个64位id标识，使用UUID方便。Span中还有其他数据：描述信息、时间戳、键值对的(注解)tag信息和parent-id等，其中parent-id可以表示Span调用链路来源。
+- Trace。类似于树结构的Span集合，表示一条调用链路，存在唯一标识。
+- 注解（Annotation）。用来记录请求特定事件的相关信息（例如事件），通常包含四个注解信息：
+  - CS：Client Sent，表示客户端发起请求。
+  - SR：Server Receive，表示服务端收到请求。
+  - SS：Server Send，表示服务端完成处理，并将结果发送给客户端。
+  - CR：Client Received，表示客户端获取到服务端返回信息。
+
+### 给服务添加请求链路跟踪
+
+> 我们将通过user-service和ribbon-service之间的服务调用来演示该功能，这里我们调用ribbon-service的接口时，ribbon-service会通过RestTemplate来调用user-service提供的接口。
+
+- 首先给user-service和ribbon-service添加请求链路跟踪功能的支持；
+- 在user-service和ribbon-service中添加相关依赖：
+
+```xml
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-zipkin</artifactId>
+</dependency>
+```
+
+- 修改application.yml文件，配置收集日志的zipkin-server访问地址：
+
+```yaml
+spring:
+  zipkin:
+    base-url: http://localhost:9411
+  sleuth:
+    sampler:
+      probability: 0.1 #设置Sleuth的抽样收集概率
+```
+
+### 整合Zipkin获取及分析日志
+
+> Zipkin是Twitter的一个开源项目，可以用来获取和分析Spring Cloud Sleuth 中产生的请求链路跟踪日志，它提供了Web界面来帮助我们直观地查看请求链路跟踪信息。
+
+- SpringBoot 2.0以上版本已经不需要自行搭建zipkin-server，我们可以从该地址下载zipkin-server：https://repo1.maven.org/maven2/io/zipkin/java/zipkin-server/2.12.9/zipkin-server-2.12.9-exec.jar
+- 下载完成后使用以下命令运行zipkin-server：
+
+```bash
+java -jar zipkin-server-2.12.9-exec.jar
+```
+
+- Zipkin页面访问地址：[http://localhost:9411](http://localhost:9411/)
+
+![](../img/springcloud_sleuth_01.png)
+
+- 启动eureka-sever，ribbon-service，user-service：
+
+![](../img/springcloud_sleuth_02.png)
+
+- 多次调用（Sleuth为抽样收集）ribbon-service的接口http://localhost:8301/user/1 ，调用完后查看Zipkin首页发现已经有请求链路跟踪信息了；
+
+![](../img/springcloud_sleuth_03.png)
+
+- 点击查看详情可以直观地看到请求调用链路和通过每个服务的耗时：
+
+![](../img/springcloud_sleuth_04.png)
+
+### 使用Elasticsearch存储跟踪信息
+
+> 如果我们把zipkin-server重启一下就会发现刚刚的存储的跟踪信息全部丢失了，可见其是存储在内存中的，有时候我们需要将所有信息存储下来，这里以存储到Elasticsearch为例，来演示下该功能。
+
+### 安装Elasticsearch
+
+- 下载Elasticsearch6.2.2的zip包，并解压到指定目录，下载地址：https://www.elastic.co/cn/downloads/past-releases/elasticsearch-6-2-2
+
+![](../img/springcloud_sleuth_05.png)
+
+- 运行bin目录下的elasticsearch.bat启动Elasticsearch
+
+### 修改启动参数将信息存储到Elasticsearch
+
+- 使用以下命令运行，就可以把跟踪信息存储到Elasticsearch里面去了，重新启动也不会丢失；
+
+```bash
+# STORAGE_TYPE：表示存储类型 ES_HOSTS：表示ES的访问地址
+java -jar zipkin-server-2.12.9-exec.jar --STORAGE_TYPE=elasticsearch --ES_HOSTS=localhost:9200 Copy to clipboardErrorCopied
+```
+
+- 之后需要重新启动user-service和ribbon-service才能生效，重启后多次调用ribbon-service的接口http://localhost:8301/user/1；
+- 如果安装了Elasticsearch的可视化工具Kibana的话，可以看到里面已经存储了跟踪信息：
+
+![](../img/springcloud_sleuth_06.png)
+
+### 更多启动参数参考
+
+https://github.com/openzipkin/zipkin/tree/master/zipkin-server#elasticsearch-storage
+
+> 不足之处
+
+1. 客户端向zipkin-server程序发送数据使用的是HTTP的方式通信，每次发送时设计连接和发送过程。导致耗时增加，对业务性能有影响。
+2. 当zipkin-server程序关闭或者重启过程中，会发现发送的数据丢失，这是因为客户端通过HTTP的方式与zipkin-server进行通信。
+
+**解决：**
+
+1. 首先是数据从保存在内存中改为持久化到数据库；
+2. 将HTTP通信改为MQ异步通信的方式，通过集成RabbitMQ或者Kafka，让zipkin客户端将信息输出到MQ中，同时zipkin-server从MQ中异步地消费链路调用信息。
+
+## Spring Cloud Alibaba Seata
+
+> Seata是Alibaba开源的一款分布式事务解决方案，致力于提供高性能和简单易用的分布式事务服务，本文将通过一个简单的下单业务场景来对其用法进行详细介绍。
+
+### 什么是分布式事务问题？
+
+#### 单体应用
+
+单体应用中，一个业务操作需要调用三个模块完成，此时数据的一致性由本地事务来保证。
+
+![](../img/springcloud_seata_05.png)
+
+#### 微服务应用
+
+随着业务需求的变化，单体应用被拆分成微服务应用，原来的三个模块被拆分成三个独立的应用，分别使用独立的数据源，业务操作需要调用三个服务来完成。此时每个服务内部的数据一致性由本地事务来保证，但是全局的数据一致性问题没法保证。
+
+![](../img/springcloud_seata_06.png)
+
+#### 小结
+
+在微服务架构中由于全局数据一致性没法保证产生的问题就是分布式事务问题。简单来说，一次业务操作需要操作多个数据源或需要进行远程调用，就会产生分布式事务问题。
+
+### Seata简介
+
+Seata 是一款开源的分布式事务解决方案，致力于提供高性能和简单易用的分布式事务服务。Seata 将为用户提供了 **AT、TCC、SAGA 和 XA 事务模式**，为用户打造一站式的分布式解决方案。
+
+### Seata原理和设计
+
+#### 定义一个分布式事务
+
+我们可以把一个分布式事务理解成一个包含了若干分支事务的全局事务，全局事务的职责是协调其下管辖的分支事务达成一致，要么一起成功提交，要么一起失败回滚。此外，通常分支事务本身就是一个满足ACID的本地事务。这是我们对分布式事务结构的基本认识，与 XA 是一致的。
+
+![](../img/springcloud_seata_07.png)
+
+#### 协议分布式事务处理过程的三个组件
+
+- Transaction Coordinator (TC)： 事务协调器，维护全局事务的运行状态，负责协调并驱动全局事务的提交或回滚；
+- Transaction Manager (TM)： 控制全局事务的边界，负责开启一个全局事务，并最终发起全局提交或全局回滚的决议；
+- Resource Manager (RM)： 控制分支事务，负责分支注册、状态汇报，并接收事务协调器的指令，驱动分支（本地）事务的提交和回滚。
+
+![](../img/springcloud_seata_08.png)
+
+#### 一个典型的分布式事务过程
+
+- TM 向 TC 申请开启一个全局事务，全局事务创建成功并生成一个全局唯一的 XID；
+- XID 在微服务调用链路的上下文中传播；
+- RM 向 TC 注册分支事务，将其纳入 XID 对应全局事务的管辖；
+- TM 向 TC 发起针对 XID 的全局提交或回滚决议；
+- TC 调度 XID 下管辖的全部分支事务完成提交或回滚请求。
+
+![](../img/springcloud_seata_09.png)
+
+### seata-server的安装与配置
+
+- 我们先从官网下载seata-server，这里下载的是`seata-server-0.9.0.zip`，下载地址：https://github.com/seata/seata/releases
+- 这里我们使用Nacos作为注册中心，Nacos的安装及使用可以参考：[Spring Cloud Alibaba：Nacos 作为注册中心和配置中心使用](https://mp.weixin.qq.com/s/N9eAMHuDEJq7kCCJPEEJqw)；
+- 解压seata-server安装包到指定目录，修改`conf`目录下的`file.conf`配置文件，主要修改自定义事务组名称，事务日志存储模式为`db`及数据库连接信息；
+
+```bash
+service {
+  #vgroup->rgroup
+  vgroup_mapping.fsp_tx_group = "default" #修改事务组名称为：fsp_tx_group，和客户端自定义的名称对应
+  #only support single node
+  default.grouplist = "127.0.0.1:8091"
+  #degrade current not support
+  enableDegrade = false
+  #disable
+  disable = false
+  #unit ms,s,m,h,d represents milliseconds, seconds, minutes, hours, days, default permanent
+  max.commit.retry.timeout = "-1"
+  max.rollback.retry.timeout = "-1"
+}
+
+## transaction log store
+store {
+  ## store mode: file、db
+  mode = "db" #修改此处将事务信息存储到数据库中
+
+  ## database store
+  db {
+    ## the implement of javax.sql.DataSource, such as DruidDataSource(druid)/BasicDataSource(dbcp) etc.
+    datasource = "dbcp"
+    ## mysql/oracle/h2/oceanbase etc.
+    db-type = "mysql"
+    driver-class-name = "com.mysql.jdbc.Driver"
+    url = "jdbc:mysql://localhost:3306/seat-server" #修改数据库连接地址
+    user = "root" #修改数据库用户名
+    password = "root" #修改数据库密码
+    min-conn = 1
+    max-conn = 3
+    global.table = "global_table"
+    branch.table = "branch_table"
+    lock-table = "lock_table"
+    query-limit = 100
+  }
+}
+```
+
+- 由于我们使用了db模式存储事务日志，所以我们需要创建一个seat-server数据库，建表sql在seata-server的`/conf/db_store.sql`中；
+- 修改`conf`目录下的`registry.conf`配置文件，指明注册中心为`nacos`，及修改`nacos`连接信息即可；
+
+```bash
+registry {
+  # file 、nacos 、eureka、redis、zk、consul、etcd3、sofa
+  type = "nacos" #改为nacos
+
+  nacos {
+    serverAddr = "localhost:8848" #改为nacos的连接地址
+    namespace = ""
+    cluster = "default"
+  }
+}
+```
+
+- 先启动Nacos，再使用seata-server中`/bin/seata-server.bat`文件启动seata-server。
+
